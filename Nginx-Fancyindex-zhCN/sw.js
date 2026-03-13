@@ -1,8 +1,8 @@
-// Nginx-Fancyindex-Theme 的 Service Worker（英文主题）
+// Nginx-Fancyindex-Theme 的 Service Worker（中文主题）
 // 提供离线支持与更快的二次访问
 
-const CACHE_NAME = 'nginx-fancyindex-en-v1';
-const ASSET_QUERY = '?lang=en';
+const CACHE_NAME = 'nginx-fancyindex-zh-v1';
+const ASSET_QUERY = '?lang=zh';
 const STATIC_ASSETS = [
     `/.theme/styles.css${ASSET_QUERY}`,
     `/.theme/addNginxFancyIndexForm.js${ASSET_QUERY}`,

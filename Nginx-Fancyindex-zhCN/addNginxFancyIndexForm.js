@@ -9,24 +9,24 @@
     'use strict';
 
     const I18N = {
-        lang: 'en',
-        directoryLabel: 'Directory',
-        directoryPrefix: 'Directory:',
-        rootLabel: 'Root',
-        breadcrumbLabel: 'Breadcrumb',
-        paginationLabel: 'Pagination',
-        copyUrlLabel: 'Copy URL',
-        copyUrlTitle: 'Copy current page URL',
-        copiedLabel: 'Copied!',
-        copyFailedLabel: 'Failed',
-        themeLabels: { auto: 'Auto', light: 'Light', dark: 'Dark' },
-        themeAriaLabel: 'Change theme',
-        searchPlaceholder: 'Type to search...',
-        searchAriaLabel: 'Search directory',
-        paginationPrev: '← Previous',
-        paginationNext: 'Next →',
-        paginationInfo: (start, end, total) => `Showing ${start}-${end} of ${total}`,
-        tableHeaders: ['Name', 'Size', 'Last modified', 'Description']
+        lang: 'zh',
+        directoryLabel: '目录',
+        directoryPrefix: '目录：',
+        rootLabel: '根目录',
+        breadcrumbLabel: '面包屑导航',
+        paginationLabel: '分页导航',
+        copyUrlLabel: '复制链接',
+        copyUrlTitle: '复制当前页面地址',
+        copiedLabel: '已复制！',
+        copyFailedLabel: '复制失败',
+        themeLabels: { auto: '自动', light: '亮色', dark: '暗色' },
+        themeAriaLabel: '切换主题',
+        searchPlaceholder: '输入关键词搜索...',
+        searchAriaLabel: '搜索目录',
+        paginationPrev: '← 上一页',
+        paginationNext: '下一页 →',
+        paginationInfo: (start, end, total) => `显示 ${start}-${end} 条，共 ${total} 条`,
+        tableHeaders: ['名称', '大小', '修改时间', '描述']
     };
 
     const THEME_STORAGE_KEY = 'fancyindex-theme';
@@ -52,12 +52,12 @@
     }
 
     const activeLang = normalizeLang(getCookieValue(LANG_COOKIE_NAME));
-    const nextLang = activeLang === 'en' ? 'zh' : 'en';
+    const nextLang = activeLang === 'zh' ? 'en' : 'zh';
 
     // 注册 Service Worker 以支持离线访问
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/.theme/sw.js').catch((err) => {
-            console.warn('Service worker registration failed:', err);
+            console.warn('Service worker 注册失败：', err);
         });
     }
 
@@ -198,8 +198,8 @@
     // 语言切换按钮
     langToggle.type = 'button';
     langToggle.className = 'theme-toggle lang-toggle';
-    langToggle.textContent = activeLang === 'en' ? '中文' : 'English';
-    langToggle.setAttribute('aria-label', activeLang === 'en' ? 'Switch to Chinese' : '切换到英文');
+    langToggle.textContent = activeLang === 'zh' ? 'English' : '中文';
+    langToggle.setAttribute('aria-label', activeLang === 'zh' ? '切换到英文' : 'Switch to Chinese');
     langToggle.addEventListener('click', () => {
         setCookie(LANG_COOKIE_NAME, nextLang);
         location.reload();

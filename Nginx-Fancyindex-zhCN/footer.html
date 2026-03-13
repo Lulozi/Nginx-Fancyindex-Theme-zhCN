@@ -1,25 +1,25 @@
 <div id="raw_include_README_md"></div>
 <footer>
     <p>
-        Theme available on <a href="https://GitHub.com/Naereen/Nginx-Fancyindex-Theme">GitHub</a> by <a href="https://GitHub.com/Naereen">Naereen</a>, © 2015-18, released under <a href="https://lbesson.mit-license.org/">the MIT License</a>.<br>
-        <a href="https://GitHub.com/Lulozi">Lulo</a> will perform Chinese adaptation on March 14, 2026。
+        主题来自 <a href="https://GitHub.com/Naereen/Nginx-Fancyindex-Theme">GitHub</a>，作者 <a href="https://GitHub.com/Naereen">Naereen</a>，© 2015-18，基于 <a href="https://lbesson.mit-license.org/">MIT 许可证</a>发布。<br>
+        <a href="https://GitHub.com/Lulozi">Lulo</a> 于 2026-3-14 进行中文适配。
     </p>
 </footer>
-    <script src="/.theme/addNginxFancyIndexForm.js?lang=en" defer></script>
-    <script src="/.theme/showdown.min.js?lang=en"></script>
-    <script src="/.theme/purify.min.js?lang=en"></script>
+    <script src="/.theme/addNginxFancyIndexForm.js?lang=zh" defer></script>
+    <script src="/.theme/showdown.min.js?lang=zh"></script>
+    <script src="/.theme/purify.min.js?lang=zh"></script>
     <script>
     (function () {
         'use strict';
 
         // 等待所需库加载完成
         if (typeof showdown === 'undefined') {
-            console.warn('Showdown library not loaded, markdown rendering disabled');
+            console.warn('未加载 Showdown 库，Markdown 渲染已禁用');
             return;
         }
 
         if (typeof DOMPurify === 'undefined') {
-            console.warn('DOMPurify library not loaded, markdown rendering disabled for security');
+            console.warn('未加载 DOMPurify 库，为安全起见禁用 Markdown 渲染');
             return;
         }
 
@@ -42,7 +42,7 @@
             }
 
             // 显示加载状态
-            target.innerHTML = '<p class="markdown-loading" style="color: var(--muted); font-style: italic; padding: 1rem;">Loading...</p>';
+            target.innerHTML = '<p class="markdown-loading" style="color: var(--muted); font-style: italic; padding: 1rem;">加载中...</p>';
 
             fetch(source)
                 .then(response => {
