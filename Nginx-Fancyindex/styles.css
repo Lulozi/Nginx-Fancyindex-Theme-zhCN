@@ -115,6 +115,7 @@ body {
     align-items: flex-start;
     min-height: 100vh;
     padding: clamp(12px, 2.5vw, 24px);                  /* 响应式页面内边距 */
+    padding-bottom: calc(clamp(12px, 2.5vw, 24px) + 64px);
     color: var(--fg);                                   /* 主要文字颜色 */
     background-color: var(--bg);
     transition: background-color 150ms ease-in, color 150ms ease-in; /* 主题淡入淡出 */
@@ -466,6 +467,13 @@ td a {
 footer {
     font-size: 12px;
     text-align: center;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.75rem 1rem;
+    background: var(--bg);
+    z-index: 10;
 }
 
 footer a {
@@ -625,6 +633,7 @@ footer a {
 @media (max-width: 720px) {
     body {
         padding: clamp(16px, 4vw, 32px);
+        padding-bottom: calc(clamp(16px, 4vw, 32px) + 64px);
         box-shadow: none;
     }
 
