@@ -4,6 +4,8 @@
 
 为 [Nginx](https://www.nginx.org/) 的 [Fancyindex 模块](https://github.com/aperezdc/ngx-fancyindex) 提供的响应式主题（作者 @aperezdc）。
 
+基于 [Nginx-Fancyindex-Theme](https://github.com/Naereen/Nginx-Fancyindex-Theme) 提供的主题（作者 @Naereen）进行中文适配。
+
 - [Nginx-Fancyindex-Theme](#nginx-fancyindex-theme)
   - [使用方法](#使用方法)
     - [FancyIndex 安装来源](#fancyindex-安装来源)
@@ -32,36 +34,133 @@
 ...
 http {
     ...
-    server {
-        listen 80;
-        server_name X.X.X.X;
-        root /var/www/html;
+ 
+    # 根据 cookie 'lang' 的值设置主题目录别名（默认中文）
+    map $cookie_lang $theme_alias {
+        default /download-nginx/decorate/Nginx-Fancyindex-Theme/Nginx-Fancyindex-zhCN;
+        ~*^(zh|zh-cn|cn)$ /download-nginx/decorate/Nginx-Fancyindex-Theme/Nginx-Fancyindex-zhCN;
+        ~*^(en|en-us|us)$ /download-nginx/decorate/Nginx-Fancyindex-Theme/Nginx-Fancyindex;
+    }
 
-        # 从 /share 提供内容
-        location ^~ / {
+    server {
+        listen       80;
+        server_name  localhost;
+
+        # 性能优化：静态下载与目录列表
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        keepalive_requests 1000;
+
+        # 文件句柄缓存，减少磁盘 stat 开销
+        open_file_cache max=10000 inactive=30s;
+        open_file_cache_valid 60s;
+        open_file_cache_min_uses 2;
+        open_file_cache_errors on;
+
+        # Gzip 用于 HTML/CSS/JS 等文本资源
+        gzip on;
+        gzip_comp_level 5;
+        gzip_min_length 1024;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_types
+            text/plain
+            text/css
+            text/javascript
+            application/javascript
+            application/json
+            application/xml
+            text/xml
+            image/svg+xml
+            application/rss+xml;
+
+        location / {
+            root   /file/download;
             fancyindex on;
-            fancyindex_localtime on;
             fancyindex_exact_size off;
+            fancyindex_localtime on;
             fancyindex_header "/.theme/header.html";
             fancyindex_footer "/.theme/footer.html";
-            ...
+            fancyindex_ignore ".theme";
+            # 其他 fancyindex 配置项...
+        }
+
+        # 主题文件别名，根据 cookie 动态切换
+        location /.theme {
+            alias $theme_alias;
+            expires 30d;
+            add_header Cache-Control "public, max-age=2592000, immutable";
+            add_header Vary "Accept-Encoding, Cookie";
         }
     }
 }
 
 ```
 
-### RHEL 操作步骤
+### Docker 安装步骤
+
+#### Dockerfile 示例
+
+```dockerfile
+FROM nginx:alpine AS builder
+
+# 安装编译工具
+RUN apk add --no-cache \
+    gcc \
+    make \
+    libc-dev \
+    linux-headers \
+    pcre-dev \
+    zlib-dev \
+    openssl-dev
+
+# 复制本地已下载的 fancyindex 源码
+COPY decorate/ngx-fancyindex-0.6.0 /tmp/ngx-fancyindex
+
+# 获取 Nginx 版本并下载对应源码（使用 awk 提取版本号）
+RUN NGINX_VERSION=$(nginx -v 2>&1 | awk -F '/' '{print $2}' | awk '{print $1}') && \
+    wget -qO- http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar xz -C /tmp
+
+# 编译动态模块
+RUN cd /tmp/nginx-* && \
+    ./configure --with-compat --add-dynamic-module=/tmp/ngx-fancyindex && \
+    make modules && \
+    cp objs/ngx_http_fancyindex_module.so /tmp/
+
+# 第二阶段：最终镜像
+FROM nginx:alpine
+COPY --from=builder /tmp/ngx_http_fancyindex_module.so /usr/lib/nginx/modules/
+```
+
+#### Docker Compose 配置示例
+
+```yaml
+services:
+  download-nginx:
+    build: .                       # 使用当前目录下的 Dockerfile 构建
+    image: nginx-fancyindex:local  # 为构建出的镜像命名
+    container_name: download-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - /download-nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      - /download-nginx/conf.d:/etc/nginx/conf.d
+      - /download-nginx/html:/usr/share/nginx/html
+      - /download-nginx/logs:/var/log/nginx
+      # 美化文件目录
+      - /download-nginx/decorate:/download-nginx/decorate
+    environment:
+      - TZ=Asia/Shanghai
+```
+#### 运行容器
 
 ```bash
-# 在 Fedora 系发行版（RHEL/CentOS/Rocky）
-dnf install nginx-mod-fancyindex
-nano /etc/nginx/nginx.conf
-mv ./Nginx-Fancyindex /var/www/html/.theme/
-# 或按配置的 alias 路径放置
-# restorecon -Rv /var/www/html/
-nginx -s reload
-# 或：systemctl restart nginx.service
+# 在 Docker 环境中，构建并运行容器
+docker-compose build
+docker-compose up -d
 ```
 
 ## 配置选项
@@ -89,7 +188,6 @@ fancyindex_ignore "Nginx-Fancyindex";
 ## JavaScript 说明
 
 - `addNginxFancyIndexForm.js` 为目录页增加搜索过滤、主题切换、分页等功能。
-- `jquery.min.js` 打包了 jQuery 2.1.0，用于 DOM 查询、事件与通用工具（本主题已不再依赖）。
 - `showdown.min.js` 提供 Markdown 转 HTML 的能力，用于加载可选的文档文件。
 
 ## 截图
