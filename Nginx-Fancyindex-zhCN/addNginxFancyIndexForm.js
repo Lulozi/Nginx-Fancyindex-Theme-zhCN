@@ -248,6 +248,108 @@
     }
 
     applyTableLabels();
+    localizeListing();
+
+    function formatChineseDate(value) {
+        const normalized = value.replace(/\s+/g, ' ').trim();
+        let match = normalized.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})\s+(\d{2}:\d{2})(?::\d{2})?(?:\s*[A-Za-z+\-].*)?$/);
+        if (match) {
+            const year = match[1];
+            const month = String(parseInt(match[2], 10));
+            const day = String(parseInt(match[3], 10));
+            const time = match[4];
+            return `${year}年-${month}月-${day}日 ${time}`;
+        }
+
+        match = normalized.match(/^(\d{4})[-\/\s]([A-Za-z]{3})[-\/\s](\d{1,2})\s+(\d{2}:\d{2})(?::\d{2})?$/);
+        if (match) {
+            const year = match[1];
+            const monthName = match[2].toLowerCase();
+            const day = String(parseInt(match[3], 10));
+            const time = match[4];
+            const months = {
+                jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+                jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12
+            };
+            const month = months[monthName];
+            if (month) {
+                return `${year}年-${month}月-${day}日 ${time}`;
+            }
+        }
+
+        match = normalized.match(/^(\d{1,2})[-\/\s]([A-Za-z]{3})[-\/\s](\d{4})\s+(\d{2}:\d{2})(?::\d{2})?$/);
+        if (match) {
+            const day = String(parseInt(match[1], 10));
+            const monthName = match[2].toLowerCase();
+            const year = match[3];
+            const time = match[4];
+            const months = {
+                jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+                jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12
+            };
+            const month = months[monthName];
+            if (month) {
+                return `${year}年-${month}月-${day}日 ${time}`;
+            }
+        }
+
+        return null;
+    }
+
+    function getDateColumnIndex() {
+        const headers = table?.querySelectorAll('thead th');
+        if (!headers || headers.length === 0) return 2;
+
+        const candidates = [
+            I18N.tableHeaders[2],
+            '最后修改时间',
+            '最后修改',
+            '修改时间',
+            'last modified',
+            'last-modified',
+            'modified',
+            'date'
+        ]
+            .filter(Boolean)
+            .map((label) => label.toLowerCase());
+
+        for (let i = 0; i < headers.length; i++) {
+            const text = headers[i].textContent.replace(/\s+/g, ' ').trim().toLowerCase();
+            if (!text) continue;
+            if (candidates.some((label) => text.includes(label))) {
+                return i;
+            }
+        }
+
+        return 2;
+    }
+
+    function localizeListing() {
+        const listingBody = tbody || table?.querySelector('tbody') || table;
+        if (!listingBody) return;
+        const dateIndex = getDateColumnIndex();
+        const rows = listingBody.querySelectorAll('tr');
+        rows.forEach((row) => {
+            const nameLink = row.querySelector('td a');
+            if (nameLink) {
+                const nameText = nameLink.textContent.trim();
+                const href = nameLink.getAttribute('href') || '';
+                if (row.classList.contains('parent') || /parent directory/i.test(nameText) || href === '../' || href === '..') {
+                    nameLink.textContent = '上级目录/';
+                }
+            }
+
+            const cells = row.querySelectorAll('td');
+            const dateCell = cells[dateIndex];
+            if (dateCell) {
+                const original = dateCell.textContent.trim();
+                const formatted = formatChineseDate(original);
+                if (formatted) {
+                    dateCell.textContent = formatted;
+                }
+            }
+        });
+    }
 
     // 创建分页控件
     function createPagination() {
