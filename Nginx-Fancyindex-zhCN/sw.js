@@ -1,7 +1,7 @@
 // Nginx-Fancyindex-Theme 的 Service Worker（中文主题）
 // 提供离线支持与更快的二次访问
 
-const CACHE_NAME = 'nginx-fancyindex-zh-v1';
+const CACHE_NAME = 'nginx-fancyindex-zh-v2';
 const ASSET_QUERY = '?lang=zh';
 const STATIC_ASSETS = [
     `/.theme/styles.css${ASSET_QUERY}`,
@@ -10,12 +10,27 @@ const STATIC_ASSETS = [
     `/.theme/purify.min.js${ASSET_QUERY}`
 ];
 
+async function precacheAssets() {
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.all(
+        STATIC_ASSETS.map(async (asset) => {
+            try {
+                const request = new Request(asset, { cache: 'reload' });
+                const response = await fetch(request);
+                if (response && response.ok) {
+                    await cache.put(asset, response);
+                }
+            } catch (error) {
+                // 忽略缓存失败的资源
+            }
+        })
+    );
+}
+
 // 安装事件 - 预缓存静态资源
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(STATIC_ASSETS);
-        }).then(() => self.skipWaiting())
+        precacheAssets().then(() => self.skipWaiting())
     );
 });
 
@@ -32,7 +47,11 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 请求事件 - 优先缓存，回退网络
+function isStaticAsset(url) {
+    return STATIC_ASSETS.some((asset) => url.includes(asset));
+}
+
+// 请求事件 - 静态资源使用 stale-while-revalidate
 self.addEventListener('fetch', (event) => {
     // 仅缓存 GET 请求
     if (event.request.method !== 'GET') {
@@ -44,29 +63,28 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (isStaticAsset(event.request.url)) {
+        event.respondWith(
+            caches.open(CACHE_NAME).then((cache) => {
+                return cache.match(event.request).then((cachedResponse) => {
+                    const fetchPromise = fetch(new Request(event.request, { cache: 'reload' }))
+                        .then((response) => {
+                            if (!response || response.status !== 200 || response.type !== 'basic') {
+                                return response;
+                            }
+                            cache.put(event.request, response.clone());
+                            return response;
+                        })
+                        .catch(() => cachedResponse);
+
+                    return cachedResponse || fetchPromise;
+                });
+            })
+        );
+        return;
+    }
+
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-
-            return fetch(event.request).then((response) => {
-                // 非成功响应不缓存
-                if (!response || response.status !== 200 || response.type !== 'basic') {
-                    return response;
-                }
-
-                const responseToCache = response.clone();
-
-                // 仅缓存主题静态资源
-                if (STATIC_ASSETS.some(asset => event.request.url.includes(asset))) {
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                }
-
-                return response;
-            });
-        })
+        fetch(event.request).catch(() => caches.match(event.request))
     );
 });
