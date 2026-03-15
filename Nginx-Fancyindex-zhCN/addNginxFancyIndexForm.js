@@ -11,7 +11,7 @@
     const I18N = {
         lang: 'zh',
         directoryLabel: '目录',
-        directoryPrefix: '目录：',
+        directoryPrefix: '目录:',
         rootLabel: '根目录',
         breadcrumbLabel: '面包屑导航',
         paginationLabel: '分页导航',
@@ -84,7 +84,11 @@
         if (!heading) return;
 
         const pathText = getPathText();
-        if (!pathText || pathText === '/') return;
+        if (!pathText) return;
+        if (pathText === '/') {
+            heading.textContent = `${I18N.directoryPrefix} /`;
+            return;
+        }
 
         const breadcrumbNav = document.createElement('nav');
         breadcrumbNav.className = 'breadcrumb-nav';
