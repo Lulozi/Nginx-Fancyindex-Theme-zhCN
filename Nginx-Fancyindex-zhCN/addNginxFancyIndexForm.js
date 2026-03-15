@@ -258,7 +258,7 @@
             const month = String(parseInt(match[2], 10));
             const day = String(parseInt(match[3], 10));
             const time = match[4];
-            return `${year}年-${month}月-${day}日 ${time}`;
+            return `${year}年${month}月${day}日 ${time}`;
         }
 
         match = normalized.match(/^(\d{4})[-\/\s]([A-Za-z]{3})[-\/\s](\d{1,2})\s+(\d{2}:\d{2})(?::\d{2})?$/);
@@ -273,7 +273,7 @@
             };
             const month = months[monthName];
             if (month) {
-                return `${year}年-${month}月-${day}日 ${time}`;
+                return `${year}年${month}月${day}日 ${time}`;
             }
         }
 
@@ -289,7 +289,7 @@
             };
             const month = months[monthName];
             if (month) {
-                return `${year}年-${month}月-${day}日 ${time}`;
+                return `${year}年${month}月${day}日 ${time}`;
             }
         }
 
