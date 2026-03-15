@@ -71,7 +71,7 @@ html {
    当 <body> 有 .theme-dark 类时覆盖变量
    值取自 Nginx-Fancyindex-Theme-dark/styles.css
    ========================= */
-body.theme-dark {
+html.theme-dark, body.theme-dark {
     --bg: #2f343f;
     --bg-elev: #262a32;
     --fg: #ffffff;
@@ -287,7 +287,7 @@ th {
     background: #e3e8f1;
 }
 
-body.theme-dark th {
+html.theme-dark th, body.theme-dark th {
     color: #8a94a6;
     background: #1f222b;
 }
@@ -668,7 +668,7 @@ footer a {
         background: var(--bg-elev);
     }
 
-    body.theme-dark tr {
+    html.theme-dark tr, body.theme-dark tr {
         box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
     }
 
@@ -693,7 +693,7 @@ footer a {
         letter-spacing: 0.04em;
     }
 
-    body.theme-dark td::before {
+    html.theme-dark td::before, body.theme-dark td::before {
         color: rgba(255, 255, 255, 0.65);
     }
 
