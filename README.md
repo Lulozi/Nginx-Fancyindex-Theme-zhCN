@@ -30,7 +30,7 @@
 
 ### Nginx 配置
 
-```conf
+```nginx
 ...
 http {
     ...
@@ -94,6 +94,149 @@ http {
             add_header Cache-Control "public, max-age=2592000, immutable";
             add_header Vary "Accept-Encoding, Cookie";
         }
+    }
+}
+
+```
+
+#### ~静态网页中文解决方案~
+
+```nginx
+# 根据 cookie 'lang' 的值设置主题目录别名（默认中文）
+map $cookie_lang $is_en {
+    default 0;
+    ~*^(en|en-us|us)$ 1;
+}
+
+server {
+		...
+
+    # 当检测到英文偏好时，内部重定向到 @serve_en（见下方），用于禁用中文 sub_filter 替换
+    error_page 418 = @serve_en;
+		
+  	...
+    
+    location / {
+        root   /goodluck/file/download;
+        fancyindex on;
+        fancyindex_exact_size off;
+        fancyindex_localtime on;
+        charset utf-8;
+        fancyindex_header "/.theme/header.html";
+        fancyindex_footer "/.theme/footer.html";
+        fancyindex_ignore ".theme";
+
+        # 对于中文主题，使用 sub_filter 将 FancyIndex 输出中的英文表头与月份替换为中文。
+        # 需要解压 gzip 内容以便替换（若启用了 gzip）。
+        # 若检测到英文偏好，则内部跳转到 @serve_en（不做中文替换）
+        if ($is_en = 1) {
+            return 418; 
+        }
+
+        gunzip on;
+        sub_filter_once off;
+        sub_filter 'File Name' '名称';
+        sub_filter 'File Size' '大小';
+        sub_filter 'Date' '修改时间';
+        sub_filter 'Parent directory/' '上一级目录/';
+        sub_filter 'Parent directory' '上一级目录';
+
+        sub_filter '-Jan' '年1月';
+        sub_filter '-Feb' '年2月';
+        sub_filter '-Mar' '年3月';
+        sub_filter '-Apr' '年4月';
+        sub_filter '-May' '年5月';
+        sub_filter '-Jun' '年6月';
+        sub_filter '-Jul' '年7月';
+        sub_filter '-Aug' '年8月';
+        sub_filter '-Sep' '年9月';
+        sub_filter '-Oct' '年10月';
+        sub_filter '-Nov' '年11月';
+        sub_filter '-Dec' '年12月';
+
+        sub_filter '-01 ' '01日 ';
+        sub_filter '-02 ' '02日 ';
+        sub_filter '-03 ' '03日 ';
+        sub_filter '-04 ' '04日 ';
+        sub_filter '-05 ' '05日 ';
+        sub_filter '-06 ' '06日 ';
+        sub_filter '-07 ' '07日 ';
+        sub_filter '-08 ' '08日 ';
+        sub_filter '-09 ' '09日 ';
+        sub_filter '-10 ' '10日 ';
+        sub_filter '-11 ' '11日 ';
+        sub_filter '-12 ' '12日 ';
+        sub_filter '-13 ' '13日 ';
+        sub_filter '-14 ' '14日 ';
+        sub_filter '-15 ' '15日 ';
+        sub_filter '-16 ' '16日 ';
+        sub_filter '-17 ' '17日 ';
+        sub_filter '-18 ' '18日 ';
+        sub_filter '-19 ' '19日 ';
+        sub_filter '-20 ' '20日 ';
+        sub_filter '-21 ' '21日 ';
+        sub_filter '-22 ' '22日 ';
+        sub_filter '-23 ' '23日 ';
+        sub_filter '-24 ' '24日 ';
+        sub_filter '-25 ' '25日 ';
+        sub_filter '-26 ' '26日 ';
+        sub_filter '-27 ' '27日 ';
+        sub_filter '-28 ' '28日 ';
+        sub_filter '-29 ' '29日 ';
+        sub_filter '-30 ' '30日 ';
+        sub_filter '-31 ' '31日 ';
+        sub_filter ' 01 ' '01日 ';
+        sub_filter ' 02 ' '02日 ';
+        sub_filter ' 03 ' '03日 ';
+        sub_filter ' 04 ' '04日 ';
+        sub_filter ' 05 ' '05日 ';
+        sub_filter ' 06 ' '06日 ';
+        sub_filter ' 07 ' '07日 ';
+        sub_filter ' 08 ' '08日 ';
+        sub_filter ' 09 ' '09日 ';
+        sub_filter ' 10 ' '10日 ';
+        sub_filter ' 11 ' '11日 ';
+        sub_filter ' 12 ' '12日 ';
+        sub_filter ' 13 ' '13日 ';
+        sub_filter ' 14 ' '14日 ';
+        sub_filter ' 15 ' '15日 ';
+        sub_filter ' 16 ' '16日 ';
+        sub_filter ' 17 ' '17日 ';
+        sub_filter ' 18 ' '18日 ';
+        sub_filter ' 19 ' '19日 ';
+        sub_filter ' 20 ' '20日 ';
+        sub_filter ' 21 ' '21日 ';
+        sub_filter ' 22 ' '22日 ';
+        sub_filter ' 23 ' '23日 ';
+        sub_filter ' 24 ' '24日 ';
+        sub_filter ' 25 ' '25日 ';
+        sub_filter ' 26 ' '26日 ';
+        sub_filter ' 27 ' '27日 ';
+        sub_filter ' 28 ' '28日 ';
+        sub_filter ' 29 ' '29日 ';
+        sub_filter ' 30 ' '30日 ';
+        sub_filter ' 31 ' '31日 ';
+    }
+
+    # 英文偏好：内部位置，不进行中文 sub_filter 替换
+    location @serve_en {
+        internal;
+        root   /goodluck/file/download;
+        fancyindex on;
+        fancyindex_exact_size off;
+        fancyindex_localtime on;
+        charset utf-8;
+        fancyindex_header "/.theme/header.html";
+        fancyindex_footer "/.theme/footer.html";
+        fancyindex_ignore ".theme";
+    }
+  
+    # 主题文件别名，根据 cookie 动态切换
+    location /.theme {
+        alias $theme_alias;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable";
+        add_header Vary "Accept-Encoding, Cookie";
     }
 }
 
